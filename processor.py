@@ -1,7 +1,5 @@
 from queue import Queue
-
 from scapy.layers.inet import IP, TCP, UDP
-
 from packet_data import PacketData
 
 
