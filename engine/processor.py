@@ -1,8 +1,8 @@
 from queue import Queue
 from scapy.layers.inet import IP, TCP, UDP
-from packet_data import PacketData
+from engine.packet_data import PacketData
 
-from flow_manager import FlowManager
+from engine.flow_manager import FlowManager
 
 
 class PacketProcessor:

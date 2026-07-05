@@ -1,8 +1,8 @@
 from queue import Queue
 from threading import Thread
 
-from packet_capture import PacketCapture
-from processor import PacketProcessor
+from engine.packet_capture import PacketCapture
+from engine.processor import PacketProcessor
 
 packet_queue = Queue()
 
