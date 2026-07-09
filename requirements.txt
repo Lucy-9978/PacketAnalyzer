@@ -1,2 +1,6 @@
 scapy
 pysqlite3
+streamlit
+discord
+python-dotenv
+watchdog
