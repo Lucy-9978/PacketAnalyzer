@@ -15,7 +15,7 @@ def detect(packet: PacketData, flow: Flow):
         return (False, "")
 
     # 최근 50개 패킷 기준으로 해당 출발지 IP가 접근한 목적지 포트
-    unique_ports = flow.get_dst_unique_ports(packet.src_ip)
+    unique_ports = flow.get_dst_unique_ports(10, packet.src_ip)
 
     # 패킷 종류에 따라 카운트 선택
     if packet.tcp_flags == "S":
