@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from streamlit_autorefresh import st_autorefresh
 
 st_autorefresh(
-    interval= 1 * 1000,   #3초마다 한번씩 새로고침
+    interval= 1 * 1000,   #1초마다 한번씩 새로고침
     key="home_refresh"
 )
 
@@ -16,8 +16,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# conn = sqlite3.connect("packets.db")
-conn = sqlite3.connect(r"C:\Users\RyunK_IT\Documents\vscodeProject\vm_shared\packets.db")
+conn = sqlite3.connect("packets.db")
+# conn = sqlite3.connect(r"C:\Users\RyunK_IT\Documents\vscodeProject\vm_shared\packets.db")
 
 st.title("🛡 Packet Analyzer")
 
