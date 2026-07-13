@@ -61,3 +61,5 @@ def detect(packet: PacketData, flow: Flow):
         print("Reason       : Abnormal TCP session behavior detected")
 
         print("=" * 60)
+
+# sudo hping3 -R -p 443 192.168.72.129 --fast --count 1000 공격코드
