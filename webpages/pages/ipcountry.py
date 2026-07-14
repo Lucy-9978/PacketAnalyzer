@@ -9,7 +9,9 @@ import pycountry
 
 # pages 폴더의 상위 폴더(webpages)를 import 경로에 추가
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from _dbsource import get_ip_list_from_db #get_warnings_list_from_db
+from _dbsource import dbsource 
+db = dbsource() 
+
 from _geoprocess import (
     ANOMALOUS_SOURCE_STATUSES,
     STATUS_LABELS,
@@ -40,7 +42,7 @@ def load_geo_data() -> pd.DataFrame:
     """DB에서 IP 목록을 가져와 status/위경도까지 붙인 DataFrame 반환.
     ttl을 REFRESH_INTERVAL_SECONDS와 맞춰서, 자동 새로고침 시마다 새 데이터를 반영."""
     index = get_index()
-    ip_list = get_ip_list_from_db()
+    ip_list = db.column("packets", "src_ip")
     #warnings_list = get_warnings_list_from_db()
     return lookup_ips(index, ip_list)
  
