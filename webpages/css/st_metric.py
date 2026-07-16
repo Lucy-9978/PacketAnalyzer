@@ -2,28 +2,34 @@ import streamlit as st
 
 def metric_cards():
     st.markdown("""
-.metric-card {
+<style>
+/* metric 전체 박스 */
+[data-testid="stMetric"] {
     background: dimgrey;
     border: 1px solid #e6e8eb;
-    border-left: 4px solid #1100ff;
+    border-left: 4px solid #001aff;
     border-radius: 10px;
     padding: 14px 18px;
-    margin-bottom: 4px;
+    margin-bottom: 4px; 
 }
-.metric-label {
+
+/* 제목(Label) */
+[data-testid="stMetricLabel"] {
     font-size: 15px;
     color: #FFFFFF;
     margin-bottom: 4px;
 }
-.metric-value {
+
+/* 숫자(Value) */
+[data-testid="stMetricValue"] {
     font-size: 30px;
     font-weight: 700;
-    color: #1100ff;
+    color: #001aff;
 }
-.section-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin-top: 6px;
-    margin-bottom: 10px;
+
+/* 변화량(Delta) */
+[data-testid="stMetricDelta"] {
+    font-size: 12px;
 }
-""")
+</style>
+""", unsafe_allow_html=True)

@@ -13,6 +13,8 @@ from datetime import datetime, timezone, timedelta
 kst = timezone(timedelta(hours=9))
 
 from  webpages.css.st_header import _setting
+from  webpages.css.st_metric import metric_cards
+from  webpages.css.st_alertbox import alret_box_style
 
 st_autorefresh(
     interval= 1 * 1000,   #1초마다 한번씩 새로고침
@@ -74,31 +76,8 @@ FROM warnings
 #     scrolling=True
 # )
 
-st.markdown("""
-<style>
-/* metric 전체 박스 */
-[data-testid="stMetric"] {
-    padding: 8px 10px;
-    border: 1px solid #4A4A4A;   /* 진회색 실선 테두리 */
-    border-radius: 10px;  
-}
 
-/* 제목(Label) */
-[data-testid="stMetricLabel"] {
-    font-size: 12px;
-}
-
-/* 숫자(Value) */
-[data-testid="stMetricValue"] {
-    font-size: 24px;
-}
-
-/* 변화량(Delta) */
-[data-testid="stMetricDelta"] {
-    font-size: 12px;
-}
-</style>
-""", unsafe_allow_html=True)
+metric_cards()
 
 # packet_size 합계 (바이트 단위라고 가정)
 total_bytes = packets["packet_size"].sum()
@@ -134,7 +113,7 @@ with col4:
 
 with col5:
     st.metric(
-        "Active Source IP",
+        "활성 IP",
         packets["src_ip"].nunique()
     )
 
@@ -213,6 +192,7 @@ with left:
     # st.plotly_chart(fig, width="stretch")
 
   
+alret_box_style()
 
 with right:
 
@@ -226,21 +206,11 @@ with right:
         for _, row in warnings.iterrows():
             last_time = datetime.fromtimestamp(row.last_timestamp, tz=kst).strftime("%Y-%m-%d %H:%M:%S")
             st.markdown(f"""
-<div style="
-    border:1px solid #ddd;
-    border-radius:6px;
-    padding:6px 10px;
-    margin-bottom:4px;
-    display:flex;
-    justify-content:space-between;
-    font-size: 14px;
-    color: #B91C1C;
-    background-color: #FDECEC;
-">
+<div class="alert-div">
     <span>{row.attack_type}</span>
     <span>{row.src_ip}</span>
     <span>{last_time}</span>
-    <span>{row.counter}회</span>
+    <span class="alert-cnt-span">{row.counter}</span>
 </div>
 """, unsafe_allow_html=True)
 
