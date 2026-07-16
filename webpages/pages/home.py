@@ -75,7 +75,7 @@ def check_new_warning():
         st.session_state.last_flashed_ts = None
 
     is_new = (
-        (now_ts - latest_ts) < 1.5
+        (now_ts - latest_ts) < 1.2
         and latest_ts != st.session_state.last_flashed_ts
     )
 
@@ -95,13 +95,13 @@ def check_new_warning():
             background-color: red;
             pointer-events: none;
             z-index: 999999;
-            animation: flash-red-fade 1.5s ease-out forwards;
+            animation: flash-red-fade 1s ease-out forwards;
         }
         </style>
         <div class="flash-overlay"></div>
         """, unsafe_allow_html=True)
 
-check_new_warning()
+# check_new_warning()
 
 ########################################################
 # KPI
@@ -342,3 +342,5 @@ with right:
             ),
         }
     )
+
+check_new_warning()
