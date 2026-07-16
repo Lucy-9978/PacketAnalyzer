@@ -603,7 +603,7 @@ with left:
 
         event = st.dataframe(
             display_df,
-            use_container_width=True,
+            width='stretch',
             height=380,
             hide_index=True,
             on_select="rerun",
@@ -622,7 +622,7 @@ with left:
             flow_display = flows_df.reset_index(drop=True)
             flow_event = st.dataframe(
                 flow_display,
-                use_container_width=True,
+                width='stretch',
                 height=380,
                 hide_index=True,
                 on_select="rerun",
