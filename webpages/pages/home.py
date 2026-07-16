@@ -114,13 +114,39 @@ def check_new_warning():
 
 metric_cards()
 
+
+
+
 # packet_size 합계 (바이트 단위라고 가정)
 total_bytes = packets["packet_size"].sum()
 
 # bps 계산 (비트 단위)
 bps = (total_bytes * 8) / 60
 
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "엔진 상태",
+        len(packets)
+    )
+
+with col2:
+    st.metric(
+        "차단 IP 수",
+        round(len(packets)/60, 1)
+    )
+
+with col3:
+    st.metric(
+        "차단된 패킷 수",
+        f"{bps/1000:.1f} Kbps"
+    )
+
+
+
 col1, col2, col3, col4, col5 = st.columns(5)
+
 
 with col1:
     st.metric(
@@ -185,6 +211,9 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, width='stretch')
+
+
+
 
 left, right = st.columns(2)
 with left:
