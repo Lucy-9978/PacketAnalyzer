@@ -34,7 +34,7 @@ class BlockedRepo:
         now = time.time()
         if (len(self.packet_buffer) >= 100 or now - self.last_packet_flush >= 1):  # 버퍼가 100개 이상이거나 마지막 커밋으로부터 1초 이상 지났다면 한 번에 커밋
             self.db.cursor.executemany('''
-                INSERT INTO packets (timestamp, src_ip, dst_ip, src_port, dst_port, protocol, packet_size, payload_size, tcp_flags)
+                INSERT INTO blocked_packets (timestamp, src_ip, dst_ip, src_port, dst_port, protocol, packet_size, payload_size, tcp_flags)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', self.packet_buffer)
             self.db.conn.commit()
@@ -49,20 +49,20 @@ class BlockedRepo:
 
         # 1시간이 지난 패킷 삭제
         self.db.cursor.execute("""
-            DELETE FROM packets
+            DELETE FROM blocked_packets
             WHERE timestamp < ?
         """, (one_hour_ago,))
 
         # 5000개 이상 쌓이면 삭제
-        self.db.cursor.execute("SELECT COUNT(*) FROM packets")
+        self.db.cursor.execute("SELECT COUNT(*) FROM blocked_packets")
         count = self.db.cursor.fetchone()[0]
 
         if count > 5000:
             self.db.cursor.execute("""
-                DELETE FROM packets
+                DELETE FROM blocked_packets
                 WHERE id NOT IN (
                     SELECT id
-                    FROM packets
+                    FROM blocked_packets
                     ORDER BY id DESC
                     LIMIT 5000
                 )
@@ -77,7 +77,7 @@ class BlockedRepo:
             return
 
         self.db.cursor.executemany("""
-            INSERT INTO packets (timestamp, src_ip, dst_ip, src_port, dst_port, protocol, packet_size, payload_size, tcp_flags)
+            INSERT INTO blocked_packets (timestamp, src_ip, dst_ip, src_port, dst_port, protocol, packet_size, payload_size, tcp_flags)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, self.packet_buffer)
 
