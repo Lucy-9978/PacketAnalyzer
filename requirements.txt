@@ -9,3 +9,5 @@ streamlit_autorefresh
 plotly
 streamlit-autorefresh
 pycountry
+Werkzeug>=3.0
+babel
