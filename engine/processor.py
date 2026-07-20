@@ -1,8 +1,8 @@
 from queue import Queue
 from scapy.layers.inet import IP, TCP, UDP
 from .packet_data import PacketData
-
 from .flow_manager import FlowManager
+from .score_calculator import ScoreCalculator
 
 from .detector_loader import load_detectors
 from .warning_manager import WarningManager
@@ -110,10 +110,16 @@ class PacketProcessor:
 
                 if result:
                     try: 
+                        # === 점수 계산하는 부분 ===
+                        calulator = ScoreCalculator()
+                        score = ScoreCalculator.calc_score()
+                        # === 점수 계산하는 부분 끝 ===
+
                         warning_manager.add_warning(
                             packet.timestamp,
                             packet.src_ip,
-                            name
+                            name,
+                            score
                         )
                     except Exception as e :
                         print(e)

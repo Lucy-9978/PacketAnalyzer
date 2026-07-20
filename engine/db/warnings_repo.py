@@ -56,3 +56,10 @@ class WarningRepo:
                 score
             ))
         self.db.conn.commit()
+    
+    def get_warning_table_by_ip(self, ip):
+        self.db.cursor.execute("""
+                SELECT * from warnings
+                where src_ip = ?
+            """, (ip,))
+        return self.db.cursor.fetchall()
