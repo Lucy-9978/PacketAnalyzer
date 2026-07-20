@@ -1,5 +1,7 @@
 
 import time
+import platform
+
 
 from engine.db.dbmodule import DBModule
 
@@ -11,6 +13,9 @@ class FirewallWorker():
         self.running = True
 
     def run(self):
+        if platform.system() != "Linux":
+            return
+
         self.db = DBModule()
         self.first_run()
 
