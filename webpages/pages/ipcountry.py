@@ -21,6 +21,12 @@ from _geoprocess import (
 
 st.set_page_config(page_title="IP 접속 위치 대시보드", layout="wide")
 
+from webpages.css.st_header import _setting
+from webpages.css.st_glass import liquid_glass
+
+_setting()
+liquid_glass()
+
 REFRESH_INTERVAL_SECONDS = 5
  
 st_autorefresh(interval=REFRESH_INTERVAL_SECONDS * 1000, key="auto_refresh")
@@ -83,12 +89,12 @@ else:
             z=count_df["count"],
             text=count_df["iso3_code"],
             colorscale=[
-                [0.0, "#fde8e8"],
-                [0.3, "#f8b4b4"],
-                [0.6, "#f05252"],
-                [1.0, "#9b1c1c"],
+                [0.0, "#5C1F1F"],
+                [0.3, "#8F2424"],
+                [0.6, "#C62828"],
+                [1.0, "#FF6B6B"],
             ],
-            marker_line_color="rgba(255,255,255,0.6)",
+            marker_line_color="rgba(255,255,255,0.25)",
             marker_line_width=0.5,
             colorbar=dict(# 지도 범례
     title=dict(text="Packets", side="top"),
@@ -111,11 +117,11 @@ else:
         domain=dict(x=[0, 0.9], y=[0, 1]),
         projection_type="equirectangular",
         showland=True,
-        landcolor="#d6e6fc",
+        landcolor="#1E2A3A",
         showocean=True,
-        oceancolor="#ffffff",
+        oceancolor="rgba(0,0,0,0)",
         showcountries=True,
-        countrycolor="rgba(200,200,200,0.4)",
+        countrycolor="rgba(255,255,255,0.15)",
         bgcolor="rgba(0,0,0,0)",
     )
     fig_geo.update_layout(
@@ -123,7 +129,7 @@ else:
         height=500,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", size=12, color="#374151"),
+        font=dict(family="Inter, sans-serif", size=12, color="#C7CBD1"),
     )
     TOP_N = 6
     pie_df = count_df[["country_name", "count"]].copy()
@@ -149,20 +155,20 @@ else:
             labels=pie_df["country_name"],
             values=pie_df["count"],
             hole=0.55,  # 도넛 형태
-            marker=dict(line=dict(color="#ffffff", width=2)),
+            marker=dict(line=dict(color="#0D1420", width=2)),
             textinfo="none",  # 조각 위 텍스트는 생략, 대신 hover로만 표시
             hovertemplate="<b>%{label}</b><br>%{value:,}건 (%{percent})<extra></extra>",
         )
     )
     fig_pie.update_layout(
-        title=dict(text="Top Countries", font=dict(size=13, color="#374151")),
+        title=dict(text="Top Countries", font=dict(size=13, color="#C7CBD1")),
         margin=dict(l=0, r=0, t=30, b=0),
         height=500,
         showlegend=True,
         legend=dict(orientation="v", font=dict(size=11)),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", color="#374151"),
+        font=dict(family="Inter, sans-serif", color="#C7CBD1"),
     )
  
     col_map, col_pie = st.columns([3, 1], gap="small")  # 지도 : 파이차트 비율 (필요시 숫자 조절)
@@ -171,78 +177,4 @@ else:
         st.plotly_chart(fig_geo, width="stretch", config={"displayModeBar": False})
     with col_pie:
         st.plotly_chart(fig_pie, width="stretch", config={"displayModeBar": False})
- 
-    
-    # ---- 국가 선택(클릭) -> 상세 정보 ----
-    # st.markdown("**국가를 선택하면 상세 접속 내역을 볼 수 있습니다.**")
-    # country_event = st.dataframe(
-    #     count_df[["country_code", "country_name", "count"]],
-    #     width="stretch",
-    #     hide_index=True,
-    #     on_select="rerun",
-    #     selection_mode="single-row",
-    #     key="country_table",
-    # )
- 
-    # selected_rows = country_event.selection.rows if country_event.selection else []
-    # if selected_rows:
-    #     selected_country = count_df.iloc[selected_rows[0]]
-    #     st.subheader(
-    #         f"📍 {selected_country['country_name']} ({selected_country['country_code']}) 상세"
-    #     )
-    #     st.metric("총 접속 건수", int(selected_country["count"]))
- 
-    #     country_ip_df = (
-    #         ok_df[ok_df["country_code"] == selected_country["country_code"]]
-    #         .groupby("ip")
-    #         .size()
-    #         .reset_index(name="접속 횟수")
-    #         .sort_values("접속 횟수", ascending=False)
-    #         .reset_index(drop=True)
-    #     )
-    #     st.dataframe(country_ip_df, width="stretch", hide_index=True)
- 
-# ---------------- IP 검색 ----------------
-# st.subheader("IP 검색")
-# search_ip = st.text_input("조회할 IP를 입력하세요 (부분 검색 가능)", value="")
- 
-# if search_ip:
-#     matched_df = df[df["ip"].str.contains(search_ip, na=False)]
- 
-#     if matched_df.empty:
-#         st.warning(f"'{search_ip}'에 해당하는 로그가 없습니다.")
-#     else:
-#         for ip_value, group in matched_df.groupby("ip"):
-#             row = group.iloc[0]
-#             access_count = len(group)
- 
-#             with st.container(border=True):
-#                 st.markdown(f"**{ip_value}** — {STATUS_LABELS.get(row['status'], row['status'])}")
-#                 c1, c2, c3 = st.columns(3)
-#                 c1.metric("접속 횟수", access_count)
-#                 c2.metric("국가", row["country_name"] or "-")
-#                 c3.metric("국가코드", row["country_code"] or "-")
-#                 if row["status"] == "ok":
-#                     st.write(f"위도: {row['latitude']}, 경도: {row['longitude']}")
-#                     st.map(
-#                         pd.DataFrame({"lat": [row["latitude"]], "lon": [row["longitude"]]}),
-#                         zoom=3,
-#                     )
- 
-# ---------------- 상태별 분포 (사설망 / 이상 / 기타) ----------------
-# st.subheader("IP 상태별 분포")
-# status_count_df = df["status_label"].value_counts().reset_index()
-# status_count_df.columns = ["status_label", "count"]
-# fig_status = px.bar(status_count_df, x="status_label", y="count", text="count")
-# st.plotly_chart(fig_status, width="stretch")
- 
-# # ---------------- 이상 징후(스푸핑 의심) 로그 상세 ----------------
-# if not anomalous_df.empty:
-#     st.subheader("스푸핑/조작 의심 로그 (Class D/E)")
-#     st.dataframe(anomalous_df[["ip", "status_label"]], width="stretch")
- 
-# # ---------------- 내부망 로그 상세 ----------------
-# if not private_df.empty:
-#     st.subheader("내부망(사설 IP) 로그")
-#     st.dataframe(private_df[["ip", "status_label"]], width="stretch")
- 
+
