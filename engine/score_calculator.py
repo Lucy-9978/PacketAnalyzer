@@ -72,5 +72,6 @@ class ScoreCalculator:
         """
         공격 이름과 src_ip로 찾아서 counter 반환
         """
-        return int(self.db.get_warning_counter(name, src_ip)[0][0])
+        cnt = self.db.get_warning_counter(name, src_ip)
+        return cnt
     

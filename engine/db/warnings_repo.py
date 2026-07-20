@@ -68,7 +68,8 @@ class WarningRepo:
                 SELECT counter from warnings
                 where src_ip = ? AND attack_type = ? AND last_timestamp >= ?
             """, (ip, attack_type, now -10))
-        return self.db.cursor.fetchall()
+        row = self.db.cursor.fetchone()
+        return row[0] if row else 0
     
     def get_warning_counter_by_attacktype(self, attack_type):
         """
