@@ -232,7 +232,7 @@ def _render_login():
                 st.image(_captcha_image("login"))
                 captcha_key = f"login_captcha_{st.session_state.get('login_captcha_text', '')}"
                 captcha_input = st.text_input(
-                    "위 이미지의 문자를 입력하세요 (대소문자 구분 안 함)", key=captcha_key
+                    "위 이미지의 문자를 입력하세요 ", key=captcha_key
                 )
  
             submitted = st.form_submit_button("확인", use_container_width=True)
@@ -283,7 +283,7 @@ def _render_signup():
             st.image(_captcha_image("signup"))
             captcha_key = f"signup_captcha_{st.session_state.get('signup_captcha_text', '')}"
             captcha_input = st.text_input(
-                "위 이미지의 문자를 입력하세요 (대소문자 구분 안 함)", key=captcha_key
+                "위 이미지의 문자를 입력하세요 ", key=captcha_key
             )
  
             submitted = st.form_submit_button("가입하기", use_container_width=True)
