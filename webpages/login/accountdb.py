@@ -17,6 +17,9 @@ LOCKOUT_MINUTES_IP = 15       # IP 기준 잠금 지속 시간
 MAX_SIGNUP_ATTEMPTS_IP = 5    # IP 기준 회원가입 시도 허용 횟수 (짧은 시간 내 계정 대량 생성/스팸 방지)
 SIGNUP_LOCKOUT_MINUTES_IP = 30  # IP 기준 회원가입 잠금 지속 시간
 
+MAX_CAPTCHA_FAILS_IP = 5    # IP 기준 캡차 실패 허용 횟수 (캡차 자체를 반복 시도하는 것 방지)
+CAPTCHA_LOCKOUT_MINUTES_IP = 10  # IP 기준 캡차 잠금 지속 시간
+
 
 def _hash_token(raw_token: str) -> str:
     # 세션 토큰은 이미 충분히 무작위(secrets.token_urlsafe)한 값이라
@@ -112,6 +115,20 @@ def init_db():
         CREATE TABLE IF NOT EXISTS signup_attempts (
             ip TEXT PRIMARY KEY,
             attempt_count INTEGER NOT NULL DEFAULT 0,
+            locked_until TIMESTAMP
+        )
+        """
+    )
+
+    # -------------------------------------------------
+    # captcha_attempts: IP 기준 캡차 반복 실패 방지
+    # (로그인/비밀번호와 무관하게 캡차 자체를 스크립트로 반복 시도하는 것 차단)
+    # -------------------------------------------------
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS captcha_attempts (
+            ip TEXT PRIMARY KEY,
+            fail_count INTEGER NOT NULL DEFAULT 0,
             locked_until TIMESTAMP
         )
         """
@@ -492,6 +509,79 @@ def record_signup_attempt(ip: str):
             f"{SIGNUP_LOCKOUT_MINUTES_IP}분간 차단되었습니다. 대량 계정 생성 공격일 수 있습니다.",
         )
         log_action("signup_spam_blocked", detail=f"ip={ip}, attempts={MAX_SIGNUP_ATTEMPTS_IP}")
+
+
+# ---------------------------------------------------------
+# captcha_attempts: IP 기준 캡차 반복 실패 방지
+# 로그인/회원가입 전 단계에서 캡차 자체를 스크립트로 반복 시도하는 것을 막습니다.
+# ---------------------------------------------------------
+def is_captcha_locked_out(ip: str):
+    if not ip:
+        return False, 0
+    conn = get_db()
+    row = conn.execute(
+        "SELECT locked_until FROM captcha_attempts WHERE ip = ?", (ip,)
+    ).fetchone()
+    conn.close()
+
+    if row is None or row["locked_until"] is None:
+        return False, 0
+
+    locked_until = datetime.fromisoformat(row["locked_until"])
+    remaining = (locked_until - datetime.now().astimezone()).total_seconds()
+    if remaining <= 0:
+        return False, 0
+    return True, int(remaining)
+
+
+def record_captcha_failure(ip: str):
+    if not ip:
+        return
+    conn = get_db()
+    row = conn.execute(
+        "SELECT fail_count FROM captcha_attempts WHERE ip = ?", (ip,)
+    ).fetchone()
+
+    just_locked = False
+    if row is None:
+        conn.execute(
+            "INSERT INTO captcha_attempts (ip, fail_count) VALUES (?, 1)", (ip,)
+        )
+    else:
+        new_count = row["fail_count"] + 1
+        if new_count >= MAX_CAPTCHA_FAILS_IP:
+            locked_until = datetime.now().astimezone() + timedelta(minutes=CAPTCHA_LOCKOUT_MINUTES_IP)
+            conn.execute(
+                "UPDATE captcha_attempts SET fail_count = ?, locked_until = ? WHERE ip = ?",
+                (new_count, locked_until, ip),
+            )
+            just_locked = True
+        else:
+            conn.execute(
+                "UPDATE captcha_attempts SET fail_count = ? WHERE ip = ?",
+                (new_count, ip),
+            )
+    conn.commit()
+    conn.close()
+
+    if just_locked:
+        add_notification(
+            "security_alert",
+            f"IP '{ip}'에서 보안 확인(캡차)을 {MAX_CAPTCHA_FAILS_IP}회 연속 실패하여 "
+            f"{CAPTCHA_LOCKOUT_MINUTES_IP}분간 차단되었습니다. 자동화 스크립트일 수 있습니다.",
+        )
+        log_action("captcha_spam_blocked", detail=f"ip={ip}, fails={MAX_CAPTCHA_FAILS_IP}")
+
+
+def record_captcha_success(ip: str):
+    if not ip:
+        return
+    conn = get_db()
+    conn.execute(
+        "UPDATE captcha_attempts SET fail_count = 0, locked_until = NULL WHERE ip = ?",
+        (ip,),
+    )
+    conn.commit()
     conn.close()
 
 
@@ -531,7 +621,7 @@ def update_last_login(user_id: int) -> str:
     이전 값(=직전 로그인 시각)을 반환합니다. 화면에 "마지막 로그인: ..."으로
     보여줄 땐 이 반환값(직전 로그인)을 쓰면 됩니다.
     """
-    now = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_db()
     previous = conn.execute(
         "SELECT last_login_at FROM users WHERE id = ?", (user_id,)
