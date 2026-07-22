@@ -1,9 +1,18 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
-from accountdb import get_db
+from webpages.login.accountdb import get_db
+from  webpages.css.st_header import _setting
+_setting()
 
-st.title("💬 메시지")
+# st.title("💬 메시지")
+
+st.markdown(
+    """
+<h1 style="font-size:28px; margin:0;">💬 메시지</h1>
+""",
+    unsafe_allow_html=True,
+)
 
 if not st.session_state.get("logged_in"):
     st.error("로그인이 필요합니다.")
