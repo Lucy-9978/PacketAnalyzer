@@ -1,52 +1,42 @@
 from engine import PacketData, Flow
-from collections import defaultdict, deque, Counter
 
-THRESHOLD = 20
-TIME_WINDOW = 20
-null_scan_table = defaultdict(list)
-
-# src_ip -> {"events": deque(), "ports": Counter()}
-scan_state = defaultdict(
-    lambda: {
-        "events": deque(),
-        "ports": Counter()
-    }
-)
+PORT_THRESHOLD = 10
+PPS_THRESHOLD = 20
 
 
 def detect(packet: PacketData, flow: Flow):
 
-    # NULL Scan 패킷만 검사
-    if packet.tcp_flags != "":
+    # TCP가 아니면 검사하지 않음
+    if flow.protocol != "TCP":
         return (False, "")
 
-    src_ip = packet.src_ip
-    dst_port = packet.dst_port
-    now = packet.timestamp
+    # NULL Scan 패킷만 검사 (아무 플래그도 켜지지 않은 패킷)
+    if packet.tcp_flags not in ("", None):
+        return (False, "")
 
-    state = scan_state[src_ip]
+    # 최근 50개 패킷 기준으로 해당 출발지 IP가 접근한 목적지 포트
+    unique_ports = flow.get_dst_unique_ports(10, packet.src_ip)
 
-    # 현재 패킷 추가
-    state["events"].append((now, dst_port))
-    state["ports"][dst_port] += 1
+    # null_count 같은 새 카운터도, get_recent_packets_by_flag() 같은 별도 메서드도
+    # 쓰지 않고, FlowManager가 이미 채워주는 flow.recent_packets(최근 10초 윈도우)를
+    # 직접 순회해서 NULL 패킷(tcp_flags가 빈 값)만 센다.
+    scan_count = sum(
+        1 for p in flow.recent_packets
+        if not (p.tcp_flags or "")
+    )
 
-    # 오래된 기록 제거
-    while state["events"]:
-        timestamp, port = state["events"][0]
+    if (
+        len(unique_ports) >= PORT_THRESHOLD
+        and scan_count >= PORT_THRESHOLD
+        and flow.pps >= PPS_THRESHOLD
+    ):
 
-        if now - timestamp <= TIME_WINDOW:
-            break
-
-        state["events"].popleft()
-
-        state["ports"][port] -= 1
-
-        if state["ports"][port] == 0:
-            del state["ports"][port]
-
-    # 서로 다른 목적지 포트 개수 확인
-    if len(state["ports"]) >= THRESHOLD:
-        print(f"[ALERT] NULL Scan Detected ({src_ip})")
+        print(
+            f"[NULL Scan Detected]",
+            f"src={packet.src_ip}",
+            f"ports={sorted(unique_ports)}",
+            f"null={scan_count}",
+            f"pps={flow.pps:.2f}"
+        )
         return (True, "NULL Scan")
-    
     return (False, "")
