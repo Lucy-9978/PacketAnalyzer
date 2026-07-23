@@ -17,12 +17,11 @@ def detect(packet: PacketData, flow: Flow):
     # 최근 50개 패킷 기준으로 해당 출발지 IP가 접근한 목적지 포트
     unique_ports = flow.get_dst_unique_ports(10, packet.src_ip)
 
-    # SYN/FIN 탐지기가 flow.syn_count / flow.fin_count를 쓰는 것과 동일하게,
-    # Xmas 패킷 누적 카운트도 flow.xmas_count로 관리한다고 가정.
-    scan_type = "Xmas"
-    scan_count = flow.xmas_count
+    # Xmas 패킷에는 "F"가 포함되어 있어서, flow.fin_count 증가 로직
+    # (if "F" in flags: flow.fin_count += 1) 이 Xmas 패킷에도 그대로 적용된다.
+    # 따라서 별도의 xmas_count 없이 flow.fin_count를 그대로 재사용할 수 있다.
+    scan_count = flow.fin_count
 
-    # Scan 탐지
     if (
         len(unique_ports) >= PORT_THRESHOLD
         and scan_count >= PORT_THRESHOLD
@@ -30,11 +29,11 @@ def detect(packet: PacketData, flow: Flow):
     ):
 
         print(
-            f"[{scan_type} Scan Detected]",
+            f"[Xmas Scan Detected]",
             f"src={packet.src_ip}",
             f"ports={sorted(unique_ports)}",
-            f"xmas={scan_count}",
+            f"fin={scan_count}",
             f"pps={flow.pps:.2f}"
         )
-        return (True, f"{scan_type} Scan")
+        return (True, "Xmas Scan")
     return (False, "")
